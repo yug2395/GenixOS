@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+.env
+.env.local
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+c-engine/build/
+c-engine/*.o
+c-engine/*.out
+c-engine/a.out
+

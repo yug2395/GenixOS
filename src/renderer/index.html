@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GENIX OS</title>
+  <script>
+    // Ensure Node-style globals exist before other scripts run
+    if (typeof window !== 'undefined' && typeof window.global === 'undefined') {
+      window.global = window;
+    }
+
+    if (typeof window !== 'undefined' && typeof window.require === 'undefined') {
+      class SimpleEventEmitter {
+        constructor() {
+          this._events = Object.create(null);
+        }
+
+        on(event, listener) {
+          if (!this._events[event]) {
+            this._events[event] = [];
+          }
+          this._events[event].push(listener);
+          return this;
+        }
+
+        off(event, listener) {
+          const listeners = this._events[event];
+          if (!listeners) {
+            return this;
+          }
+          this._events[event] = listeners.filter((l) => l !== listener);
+          return this;
+        }
+
+        once(event, listener) {
+          const onceListener = (...args) => {
+            this.off(event, onceListener);
+            listener(...args);
+          };
+          return this.on(event, onceListener);
+        }
+
+        emit(event, ...args) {
+          const listeners = this._events[event];
+          if (!listeners || listeners.length === 0) {
+            return false;
+          }
+          listeners.slice().forEach((listener) => listener(...args));
+          return true;
+        }
+      }
+
+      window.require = (moduleId) => {
+        if (moduleId === 'events') {
+          SimpleEventEmitter.EventEmitter = SimpleEventEmitter;
+          return SimpleEventEmitter;
+        }
+
+        throw new Error('Module "' + moduleId + '" is not available in the browser polyfill.');
+      };
+    }
+
+    if (typeof window !== 'undefined' && typeof window.GENIX_BACKEND_WS_URL === 'undefined') {
+      window.GENIX_BACKEND_WS_URL = 'ws://localhost:18080';
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      background: #00659D;
+    }
+    #root {
+      width: 100vw;
+      height: 100vh;
+    }
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="loading">Loading GENIX OS...</div>
+  </div>
+  <script>
+    // Test script loading immediately
+    (function() {
+      console.log('Inline script executing...');
+      
+      // Try to load renderer.js manually as a test
+      const testScript = document.createElement('script');
+      testScript.src = 'renderer.js';
+      testScript.onerror = function() {
+        console.error('Failed to load renderer.js');
+        document.getElementById('error-display').style.display = 'block';
+        document.getElementById('error-display').innerHTML = 
+          '<strong>Script Load Error:</strong> Failed to load renderer.js. Check Network tab.';
+      };
+      testScript.onload = function() {
+        console.log('renderer.js loaded successfully');
+      };
+      // Don't append - webpack should handle this
+    })();
+  </script>
+  <div id="error-display" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: red; color: white; padding: 20px; z-index: 10000;"></div>
+  <script>
+    console.log('HTML loaded, waiting for React...');
+    console.log('Script tag should load renderer.js');
+    
+    // Check if script element exists
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded');
+      const scripts = document.getElementsByTagName('script');
+      console.log('Found', scripts.length, 'script tags');
+      for (let i = 0; i < scripts.length; i++) {
+        console.log('Script', i, ':', scripts[i].src || 'inline');
+      }
+    });
+    
+    // Display errors on page
+    window.addEventListener('error', function(event) {
+      console.error('Error caught:', event.error, event.message, event.filename, event.lineno);
+      const errorDiv = document.getElementById('error-display');
+      if (errorDiv) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerHTML = '<strong>Error:</strong> ' + (event.error ? event.error.message : event.message) + 
+          '<br><small>File: ' + (event.filename || 'unknown') + ':' + (event.lineno || '?') + '</small>' +
+          '<br><small>' + (event.error ? event.error.stack : '') + '</small>';
+      }
+    });
+    
+    // Check if script loaded after 5 seconds
+    setTimeout(function() {
+      const root = document.getElementById('root');
+      if (root && root.innerHTML.includes('Loading GENIX OS...')) {
+        console.error('Timeout: React did not render');
+        const errorDiv = document.getElementById('error-display');
+        if (errorDiv) {
+          errorDiv.style.display = 'block';
+          errorDiv.innerHTML = '<strong>Timeout:</strong> React did not load after 5 seconds.<br>' +
+            '<small>Check: 1) DevTools console 2) Network tab for renderer.js 3) Any CORS errors</small>';
+        }
+      } else {
+        console.log('React appears to have rendered successfully');
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
+

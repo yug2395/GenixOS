@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Direct Test</title>
+</head>
+<body>
+  <div id="root">Testing...</div>
+  <script>
+    console.log('Direct test script running');
+    fetch('http://localhost:3000/renderer.js')
+      .then(r => r.text())
+      .then(code => {
+        console.log('Fetched code length:', code.length);
+        eval(code);
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        document.body.innerHTML = 'Error: ' + err.message;
+      });
+  </script>
+</body>
+</html>
